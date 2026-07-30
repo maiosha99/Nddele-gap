@@ -44,6 +44,21 @@ If the repository does not include `gradlew`, Codemagic creates it during the bu
 
 For a Play Store upload-ready release, configure signing in Codemagic or Android Studio before publishing.
 
+### Required Codemagic Signing
+
+Before running `Android Release AAB`, add an Android keystore in Codemagic:
+
+1. Open Codemagic team settings.
+2. Go to `codemagic.yaml settings > Code signing identities > Android keystores`.
+3. Upload your upload keystore.
+4. Set the reference name to:
+
+```text
+needle_gap_upload_key
+```
+
+Codemagic will then expose `CM_KEYSTORE_PATH`, `CM_KEYSTORE_PASSWORD`, `CM_KEY_ALIAS`, and `CM_KEY_PASSWORD`, and Gradle will sign the release AAB automatically.
+
 ## Play Store Notes
 
 - The current in-game ad is a simulated countdown. Real Play Store monetization needs AdMob or another real ad SDK.

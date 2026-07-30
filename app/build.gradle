@@ -10,8 +10,26 @@ android {
         applicationId 'com.finan.needlegap'
         minSdk 23
         targetSdk 35
-        versionCode 1
-        versionName '1.0.0'
+        versionCode (project.findProperty('versionCode') ?: '1').toInteger()
+        versionName (project.findProperty('versionName') ?: '1.0.0')
+    }
+
+    signingConfigs {
+        release {
+            def keystorePath = System.getenv('CM_KEYSTORE_PATH')
+            if (keystorePath != null && keystorePath.trim()) {
+                storeFile file(keystorePath)
+                storePassword System.getenv('CM_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('CM_KEY_ALIAS')
+                keyPassword System.getenv('CM_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
     }
 }
 

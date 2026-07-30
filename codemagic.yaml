@@ -29,6 +29,8 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       java: 17
+      android_signing:
+        - needle_gap_upload_key
       vars:
         PACKAGE_NAME: "com.finan.needlegap"
     scripts:
@@ -38,6 +40,6 @@ workflows:
       - name: Build release app bundle
         script: |
           chmod +x ./gradlew
-          ./gradlew :app:bundleRelease --stacktrace
+          ./gradlew :app:bundleRelease --stacktrace -PversionCode=$BUILD_NUMBER -PversionName=1.0.$BUILD_NUMBER
     artifacts:
       - app/build/outputs/bundle/release/*.aab
