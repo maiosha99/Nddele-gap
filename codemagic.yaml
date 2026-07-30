@@ -48,7 +48,7 @@ workflows:
           ls -la app
       - name: Create Gradle wrapper
         script: |
-          gradle wrapper --gradle-version 8.9 --distribution-type all
+          gradle wrapper --gradle-version 8.9 --distribution-type all --no-configuration-cache
       - name: Build debug APK
         script: |
           chmod +x ./gradlew
@@ -69,7 +69,7 @@ workflows:
     scripts:
       - name: Create Gradle wrapper
         script: |
-          gradle wrapper --gradle-version 8.9 --distribution-type all
+          gradle wrapper --gradle-version 8.9 --distribution-type all --no-configuration-cache
       - name: Build release app bundle
         script: |
           chmod +x ./gradlew
