@@ -1,4 +1,37 @@
 workflows:
+  generate-android-keystore:
+    name: Generate Android Keystore
+    max_build_duration: 10
+    instance_type: mac_mini_m2
+    environment:
+      java: 17
+    scripts:
+      - name: Generate upload keystore
+        script: |
+          mkdir -p codemagic-keystore
+          STORE_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')
+          KEY_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')
+          KEY_ALIAS=needlegap
+          keytool -genkeypair \
+            -v \
+            -keystore codemagic-keystore/needlegap-upload-key.jks \
+            -storetype JKS \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -alias "$KEY_ALIAS" \
+            -storepass "$STORE_PASSWORD" \
+            -keypass "$KEY_PASSWORD" \
+            -dname "CN=Needle Gap, OU=Games, O=Needle Gap, L=Cairo, ST=Cairo, C=EG"
+          {
+            echo "Reference name: needle_gap_upload_key"
+            echo "Alias: $KEY_ALIAS"
+            echo "Keystore password: $STORE_PASSWORD"
+            echo "Key password: $KEY_PASSWORD"
+          } > codemagic-keystore/keystore-info.txt
+    artifacts:
+      - codemagic-keystore/*
+
   android-debug:
     name: Android Debug APK
     max_build_duration: 60
