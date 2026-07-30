@@ -24,7 +24,7 @@ android {
                 storeFile file(keystorePath)
                 storePassword System.getenv('CM_KEYSTORE_PASSWORD')
                 keyAlias System.getenv('CM_KEY_ALIAS')
-                keyPassword System.getenv('CM_KEY_PASSWORD')
+                keyPassword System.getenv('CM_KEY_PASSWORD') ?: System.getenv('CM_KEYSTORE_PASSWORD')
             }
         }
     }

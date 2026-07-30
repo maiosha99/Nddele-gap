@@ -10,7 +10,7 @@ workflows:
         script: |
           mkdir -p codemagic-keystore
           STORE_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')
-          KEY_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')
+          KEY_PASSWORD=$STORE_PASSWORD
           KEY_ALIAS=needlegap
           keytool -genkeypair \
             -v \
