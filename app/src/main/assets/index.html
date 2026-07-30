@@ -372,6 +372,7 @@ canvas{display:block;position:absolute;top:0;left:0;border-radius:8px}
   <div id="home-title">NEEDLE<br><span>GAP</span></div>
   <div id="home-sub">Precision timing arcade</div>
   <button class="btn-primary" id="btn-home-start">Start Game</button>
+  <button class="btn-secondary" id="btn-new-game">New Game</button>
 </div>
 <div id="wrap">
 
@@ -522,6 +523,7 @@ function getLevelCfg(){
 // ---- STATE ----
 let state='idle',score=0,level=1,lives=3;
 let bestScore=parseInt(localStorage.getItem('ng_best')||'0');
+const PROGRESS_KEY='ng_progress';
 let ringAngle=0,ringSpeed=0;
 let gaps=[],neededToClose=0;
 let needleAngle=0,needleRotSpeed=0,needlePulseT=0,cfg={};
@@ -544,6 +546,20 @@ function initRound(){
 
 function startGame(){
   score=0;level=1;lives=3;ringAngle=0;
+  beginRun();
+}
+
+function continueGame(){
+  const saved=loadProgress();
+  if(saved){
+    score=saved.score;level=saved.level;lives=saved.lives;ringAngle=0;
+  } else {
+    score=0;level=1;lives=3;ringAngle=0;
+  }
+  beginRun();
+}
+
+function beginRun(){
   document.getElementById('home-screen').classList.add('hidden');
   hideAllModals();initRound();
   state='playing';updateUI();
@@ -556,6 +572,30 @@ function startGame(){
 }
 
 function hideAllModals(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('show'));}
+
+function saveProgress(){
+  if(state==='over'){
+    localStorage.removeItem(PROGRESS_KEY);
+    return;
+  }
+  const data={level:Math.min(Math.max(level,1),MAX_LEVEL),score:Math.max(score,0),lives:Math.max(lives,1)};
+  localStorage.setItem(PROGRESS_KEY,JSON.stringify(data));
+}
+
+function loadProgress(){
+  try{
+    const data=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'null');
+    if(!data||!Number.isFinite(data.level)||data.level<1||data.level>MAX_LEVEL) return null;
+    return {level:Math.floor(data.level),score:Math.max(parseInt(data.score||0),0),lives:Math.min(Math.max(parseInt(data.lives||3),1),3)};
+  }catch(e){
+    localStorage.removeItem(PROGRESS_KEY);
+    return null;
+  }
+}
+
+function clearProgress(){
+  localStorage.removeItem(PROGRESS_KEY);
+}
 
 // ---- SHOOT ----
 function angleDiff(a,b){return((b-a)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI}
@@ -580,15 +620,16 @@ function shoot(){
       setTimeout(()=>{
         if(level>=MAX_LEVEL){
           saveBest();
+          clearProgress();
           const m=document.getElementById('modal-start');
           m.querySelector('h1').textContent='LEGEND';
           m.querySelector('p').textContent=`All ${MAX_LEVEL} levels cleared!\nScore: ${score}`;
           document.getElementById('btn-start').textContent='Play Again';
-          m.classList.add('show');state='over';
+          m.classList.add('show');state='over';updateHomeScreen();
         } else {
           haptic([18,35,18]);
           playLevelUp();showLevelUp();
-          level++;lives=3;initRound();updateUI();
+          level++;lives=3;saveProgress();initRound();updateUI();
         }
       },700);
     }
@@ -597,7 +638,7 @@ function shoot(){
     haptic([35,45,35]);
     playMiss();
     flash('✗  MISSED','bad');updateUI();
-    saveBest();
+    saveBest();saveProgress();
     if(lives<=0){
       state='paused';
       setTimeout(()=>{
@@ -659,6 +700,7 @@ window.grantExtraLifeFromAd=function(){
   document.getElementById('modal-video').classList.remove('show');
   document.getElementById('modal-lives').classList.remove('show');
   lives=1;initRound();state='playing';updateUI();
+  saveProgress();
   haptic(18);
   flash('EXTRA LIFE','good');
 };
@@ -673,6 +715,7 @@ function skipVideo(){
   clearInterval(videoInterval);
   document.getElementById('modal-video').classList.remove('show');
   lives=1;initRound();state='playing';updateUI();
+  saveProgress();
   haptic(18);
   flash('♥  Extra life!','good');
 }
@@ -680,6 +723,7 @@ function skipVideo(){
 function restartLevel(){
   document.getElementById('modal-lives').classList.remove('show');
   lives=3;initRound();state='playing';updateUI();
+  saveProgress();
   haptic(18);
 }
 
@@ -838,7 +882,8 @@ function drawStock(){
 }
 
 // ---- EVENTS ----
-document.getElementById('btn-home-start').onclick=()=>{resumeAC();startGame();};
+document.getElementById('btn-home-start').onclick=()=>{resumeAC();continueGame();};
+document.getElementById('btn-new-game').onclick=()=>{resumeAC();clearProgress();startGame();};
 document.getElementById('btn-start').onclick=()=>{resumeAC();startGame();};
 document.getElementById('btn-watch').onclick=watchVideo;
 document.getElementById('btn-restart').onclick=restartLevel;
@@ -859,10 +904,20 @@ canvas.addEventListener('click',()=>{if(state==='playing')shoot();});
 document.addEventListener('keydown',e=>{
   if(['Space','ArrowUp','Enter'].includes(e.code)){
     e.preventDefault();
-    if(state==='idle'){resumeAC();startGame();}
+    if(state==='idle'){resumeAC();continueGame();}
     else if(state==='playing')shoot();
   }
 });
+
+function updateHomeScreen(){
+  const saved=loadProgress();
+  document.getElementById('btn-home-start').textContent=saved?'Continue':'Start Game';
+  document.getElementById('btn-new-game').style.display=saved?'block':'none';
+  document.getElementById('home-sub').textContent=saved?`Level ${saved.level}  ·  Score ${saved.score}`:'Precision timing arcade';
+}
+
+window.addEventListener('beforeunload',()=>{if(state==='playing'||state==='paused')saveProgress();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&(state==='playing'||state==='paused'))saveProgress();});
 
 function updateControls(){
   document.getElementById('btn-sound').classList.toggle('off',!soundOn);
@@ -870,6 +925,7 @@ function updateControls(){
   document.getElementById('btn-haptic').classList.toggle('off',!hapticsOn);
 }
 updateControls();
+updateHomeScreen();
 document.getElementById('best-val').textContent=bestScore;
 updateUI();draw();
 </script>
