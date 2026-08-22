@@ -54,7 +54,7 @@ AdMob rewarded ads are now integrated. Review Google's latest AdMob disclosures 
 The Android app uses a real AdMob rewarded ad unit:
 
 ```text
-ca-app-pub-5167184884708072/9810067056
+ca-app-pub-5395737731290264/7021369149
 ```
 
 The browser preview still uses the simulated countdown because AdMob only runs inside the Android app.
